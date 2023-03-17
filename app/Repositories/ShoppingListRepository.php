@@ -26,10 +26,6 @@ class ShoppingListRepository
 
     public function updateShoppingList(ShoppingList $shoppingList, array $newShoppingListDetails)
     {
-        if (! isset($newShoppingListDetails['items'])) {
-            $newShoppingListDetails['items'] = [];
-        }
-
         $shoppingList->update($newShoppingListDetails + ['items' => []]);
 
         return $shoppingList;

@@ -1,37 +1,24 @@
 <?php
 
-namespace Tests\Feature\Auth;
-
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
-class AuthenticationTest extends TestCase
-{
-    use RefreshDatabase;
+beforeEach(fn () => $this->user = User::factory()->create());
 
-    public function test_users_can_authenticate_using_the_login_screen(): void
-    {
-        $user = User::factory()->create();
+test('users can authenticate using the login api', function () {
+    $response = $this->post('/login', [
+        'email' => $this->user->email,
+        'password' => 'password',
+    ]);
 
-        $response = $this->post('/login', [
-            'email' => $user->email,
-            'password' => 'password',
-        ]);
+    $this->assertAuthenticated();
+    $response->assertNoContent();
+});
 
-        $this->assertAuthenticated();
-        $response->assertNoContent();
-    }
+test('users can not authenticate with invalid password', function () {
+    $this->post('/login', [
+        'email' => $this->user->email,
+        'password' => 'wrong-password',
+    ]);
 
-    public function test_users_can_not_authenticate_with_invalid_password(): void
-    {
-        $user = User::factory()->create();
-
-        $this->post('/login', [
-            'email' => $user->email,
-            'password' => 'wrong-password',
-        ]);
-
-        $this->assertGuest();
-    }
-}
+    $this->assertGuest();
+});

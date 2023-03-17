@@ -6,7 +6,6 @@ use App\Http\Requests\ShoppingListRequest;
 use App\Http\Resources\ShoppingListResource;
 use App\Models\ShoppingList;
 use App\Repositories\ShoppingListRepository;
-use Illuminate\Http\Request;
 
 class ShoppingListController extends Controller
 {
@@ -52,5 +51,7 @@ class ShoppingListController extends Controller
     public function destroy(ShoppingList $shoppingList, ShoppingListRepository $shoppingListRepository)
     {
         $shoppingListRepository->deleteShoppingList($shoppingList);
+
+        return response()->noContent();
     }
 }
