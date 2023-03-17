@@ -30,4 +30,21 @@ class ShoppingList extends Model
         'id' => 'integer',
         'items' => 'array',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Retrieve the model for a bound value.
+     *
+     * @param  mixed  $value
+     * @param  string|null  $field
+     * @return \Illuminate\Database\Eloquent\Model|null
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return auth()->user()->shoppingLists()->where('id', $value)->firstOrFail();
+    }
 }

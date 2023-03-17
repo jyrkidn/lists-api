@@ -2,9 +2,12 @@
 
 use App\Models\ShoppingList;
 use App\Models\User;
+use Illuminate\Testing\Fluent\AssertableJson;
 
 beforeEach(function () {
-    $this->user = User::factory()->create();
+    $this->user = User::factory()
+        ->hasShoppingLists(10)
+        ->create();
 });
 
 it('needs authorization', function () {
@@ -16,9 +19,49 @@ it('needs authorization', function () {
         ]);
 });
 
-it('can get shopping lists', function () {
-    ShoppingList::factory(10)->create();
+it('can not access shopping lists from other user', function () {
+    $this->anotherUser = User::factory()
+        ->hasShoppingLists(2)
+        ->create();
 
+    $this
+        ->actingAs($this->user)
+        ->getJson('/api/shopping-list')
+        ->assertStatus(200)
+        ->assertJson(fn (AssertableJson $json) =>
+            $json->has('data', 10)
+                ->has('data.0', fn (AssertableJson $json) =>
+                    $json
+                        ->where('id', $this->user->shoppingLists->first()->id)
+                        ->etc()
+                )
+        );
+
+    $this
+        ->actingAs($this->anotherUser)
+        ->getJson('/api/shopping-list')
+        ->assertStatus(200)
+        ->assertJson(fn (AssertableJson $json) =>
+            $json->has('data', 2)
+                ->has('data.0', fn (AssertableJson $json) =>
+                    $json
+                        ->where('id', $this->anotherUser->shoppingLists->first()->id)
+                        ->etc()
+                )
+        );
+
+    $this
+        ->actingAs($this->user)
+        ->getJson("/api/shopping-list/{$this->user->shoppingLists->first()->id}")
+        ->assertStatus(200);
+
+    $this
+        ->actingAs($this->anotherUser)
+        ->getJson("/api/shopping-list/{$this->user->shoppingLists->first()->id}")
+        ->assertStatus(404);
+});
+
+it('can get shopping lists', function () {
     $this
         ->actingAs($this->user)
         ->getJson('/api/shopping-list')
@@ -133,7 +176,7 @@ it('will validate items.is_bought', function () {
 });
 
 it('can show a shopping list', function () {
-    $shoppingList = ShoppingList::factory()->create();
+    $shoppingList = $this->user->shoppingLists->first();
 
     $this
         ->actingAs($this->user)
@@ -152,6 +195,7 @@ it('can show a shopping list', function () {
 it('will not show a deleted shopping list', function () {
     $shoppingList = ShoppingList::factory()->create([
         'deleted_at' => now()->subDay(),
+        'user_id' => $this->user,
     ]);
 
     $this
@@ -161,7 +205,7 @@ it('will not show a deleted shopping list', function () {
 });
 
 it('can update a shopping list', function () {
-    $shoppingList = ShoppingList::factory()->create();
+    $shoppingList = $this->user->shoppingLists->first();
 
     $this
         ->actingAs($this->user)
@@ -201,6 +245,7 @@ it('can update a shopping list', function () {
 it('can not update a deleted shopping list', function () {
     $shoppingList = ShoppingList::factory()->create([
         'deleted_at' => now()->subDay(),
+        'user_id' => $this->user,
     ]);
 
     $this
@@ -222,7 +267,7 @@ it('can not update a deleted shopping list', function () {
 });
 
 it('can delete a shopping list', function () {
-    $shoppingList = ShoppingList::factory()->create();
+    $shoppingList = $this->user->shoppingLists->first();
 
     $this
         ->actingAs($this->user)
@@ -235,6 +280,7 @@ it('can delete a shopping list', function () {
 it('can not delete a deleted shopping list', function () {
     $shoppingList = ShoppingList::factory()->create([
         'deleted_at' => now()->subDay(),
+        'user_id' => $this->user,
     ]);
 
     $this

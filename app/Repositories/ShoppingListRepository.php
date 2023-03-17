@@ -10,7 +10,7 @@ class ShoppingListRepository
     public function getShoppingLists()
     {
         return ShoppingListResource::collection(
-            ShoppingList::select(['id', 'created_at', 'name', 'items'])
+            auth()->user()->shoppingLists()->select(['id', 'created_at', 'name', 'items'])
                 ->get()
         );
     }
@@ -21,7 +21,7 @@ class ShoppingListRepository
             $shoppingListDetails['items'] = [];
         }
 
-        return ShoppingList::create($shoppingListDetails);
+        return auth()->user()->shoppingLists()->create($shoppingListDetails);
     }
 
     public function updateShoppingList(ShoppingList $shoppingList, array $newShoppingListDetails)
